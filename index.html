@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Signs: Reactor Core</title>
+    <!-- 
+    MIT License
+
+    Copyright (c) 2025 [Your Name/Handle Here]
+
+    Permission is hereby granted, free of charge, to any person obtaining a copy
+    of this software and associated documentation files (the "Software"), to deal
+    in the Software without restriction, including without limitation the rights
+    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+    copies of the Software, and to permit persons to whom the Software is
+    furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+    SOFTWARE.
+    -->
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --matter: #22d3ee; /* Cyan */
+            --antimatter: #d946ef; /* Magenta */
+            --core: #facc15; /* Yellow */
+            --text: #f8fafc;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * { box-sizing: border-box; user-select: none; }
+        
+        body {
+            margin: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        h1 { margin: 0 0 1rem 0; letter-spacing: 2px; text-transform: uppercase; font-size: 1.5rem; color: var(--core); }
+        
+        .game-container {
+            width: 100%;
+            max-width: 600px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Reactor Display */
+        .reactor-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--panel);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            position: relative;
+            border: 1px solid #334155;
+        }
+
+        .chamber {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            min-width: 80px;
+        }
+
+        .chamber-label { font-size: 0.8rem; opacity: 0.6; text-transform: uppercase; }
+        .chamber-value { font-size: 2.5rem; font-weight: bold; transition: color 0.3s; }
+
+        .equals { color: #64748b; font-size: 2rem; }
+
+        /* Card Controls */
+        .control-panel {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        button.card {
+            background: var(--panel);
+            border: 2px solid #334155;
+            border-radius: 12px;
+            padding: 1.5rem 0.5rem;
+            cursor: pointer;
+            transition: transform 0.1s, border-color 0.2s;
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        button.card:active { transform: scale(0.95); }
+        button.card:hover { border-color: var(--text); }
+        
+        button.card.matter { border-bottom: 4px solid var(--matter); }
+        button.card.antimatter { border-bottom: 4px solid var(--antimatter); }
+
+        .card-icon { font-size: 2rem; }
+        .card-val { font-weight: bold; font-size: 1.25rem; }
+
+        /* HUD */
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 600px;
+            padding: 0 1rem;
+            font-family: var(--font-mono);
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        /* Utilities */
+        .positive { color: var(--matter); }
+        .negative { color: var(--antimatter); }
+        .neutral { color: var(--text); }
+        .core-symbol { color: var(--core); font-weight: bold; }
+
+        .hidden { display: none; }
+        
+        #victory-screen {
+            position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 100;
+        }
+        
+        .btn-primary {
+            background: var(--core); color: #000; border: none; padding: 1rem 2rem;
+            font-weight: bold; border-radius: 8px; font-size: 1.2rem; cursor: pointer;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hud">
+        <span id="level-display">Level 1</span>
+        <span id="status-display">Stabilizing...</span>
+    </div>
+
+    <h1>⚡ SIGNS ⚡</h1>
+
+    <div class="game-container">
+        <!-- The Equation: (Core + Load) = Target -->
+        <div class="reactor-display">
+            <div class="chamber">
+                <span class="chamber-label">Core Load</span>
+                <div id="left-side">
+                    <span class="core-symbol">⚡</span>
+                    <span id="left-val" class="neutral">+ 0</span>
+                </div>
+            </div>
+
+            <div class="equals">=</div>
+
+            <div class="chamber">
+                <span class="chamber-label">Output</span>
+                <div id="right-side">
+                    <span id="right-val" class="neutral">0</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-panel" id="deck">
+            <!-- Cards injected by JS -->
+        </div>
+    </div>
+
+    <div id="victory-screen" class="hidden">
+        <h2 style="font-size: 3rem; margin-bottom: 1rem; color: var(--matter);">STABLE</h2>
+        <p style="margin-bottom: 2rem;">Reactor Balanced</p>
+        <button class="btn-primary" onclick="game.nextLevel()">Next Sequence</button>
+    </div>
+
+    <script>
+        // Simple Synthesizer (No external assets)
+        const AudioEngine = {
+            ctx: null,
+            init() {
+                if (!this.ctx) this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            },
+            play(freq, type='sine', dur=0.1) {
+                if (!this.ctx) this.init();
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.1, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + dur);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + dur);
+            },
+            playWin() {
+                [440, 554, 659].forEach((f, i) => setTimeout(() => this.play(f, 'triangle', 0.3), i*100));
+            }
+        };
+
+        const Game = {
+            level: 1,
+            state: {
+                load: 0, // The parasitic load (b)
+                target: 0, // The right side (c)
+                core: 'x'  // Conceptually
+            },
+            
+            init() {
+                this.generateLevel();
+                this.render();
+            },
+
+            generateLevel() {
+                const max = Math.min(3 + Math.floor(this.level/2), 9);
+                
+                // 1. Generate non-zero load (b)
+                let b = 0;
+                while (b === 0) b = Math.floor(Math.random() * (max * 2 + 1)) - max;
+                
+                // 2. Determine solution (what x should result in)
+                const sol = Math.floor(Math.random() * (max * 2)) - max;
+                
+                // 3. Set Right Side (c) = sol + b
+                // Equation: (x + b) = c
+                // We start with x conceptually being 0 relative to load, player must neutralize b
+                // Actually, let's simplify for "Signs":
+                // Left display: "x + [current_val]"
+                // Goal: Make [current_val] == 0.
+                
+                // Let's stick to the confirmed mechanic:
+                // Left = b, Right = c.
+                // Cards add to BOTH.
+                // Win when Left == 0 (Isolation).
+                
+                this.state.load = b;
+                this.state.target = 0 + b; // Initial target is b, but we want to manipulate it?
+                
+                // Revert to strict algebraic mechanic:
+                // Start: Left = b, Right = c
+                // Player adds n. New Left = b+n, New Right = c+n
+                // Win Condition: Left == 0.
+                // Therefore, implicit math: b + n = 0 => n = -b.
+                // Right side acts as checksum.
+                
+                // To make it playable:
+                // We need to generate a set of cards that can sum to -b.
+                
+                this.state.load = b;
+                this.state.target = Math.floor(Math.random() * 10) - 5; // Just a distractor/checksum
+                
+                // Generate Deck
+                this.deck = [];
+                // Ensure solution is possible
+                const needed = -b;
+                // Add exact solution piece logic later, for now purely random but fair
+                for(let i=0; i<3; i++) {
+                    const val = Math.floor(Math.random() * 5) + 1;
+                    const type = Math.random() > 0.5 ? 'matter' : 'antimatter';
+                    this.deck.push({ val, type });
+                }
+                // Force at least one parity mix to prevent "impossible by even/odd" lock
+                this.deck[0].val = 1; 
+                this.deck[0].type = 'matter';
+                this.deck[1].val = 2;
+                this.deck[1].type = 'antimatter';
+            },
+
+            applyCard(card) {
+                AudioEngine.play(card.type === 'matter' ? 600 : 200, 'sine');
+                
+                const delta = card.type === 'matter' ? card.val : -card.val;
+                
+                this.state.load += delta;
+                this.state.target += delta;
+                
+                this.render();
+                this.checkWin();
+            },
+
+            checkWin() {
+                if (this.state.load === 0) {
+                    AudioEngine.playWin();
+                    document.getElementById('victory-screen').classList.remove('hidden');
+                }
+            },
+
+            nextLevel() {
+                this.level++;
+                document.getElementById('victory-screen').classList.add('hidden');
+                this.generateLevel();
+                this.render();
+            },
+
+            render() {
+                document.getElementById('level-display').innerText = `Level ${this.level}`;
+                
+                // Render Left (Core + Load)
+                const lVal = this.state.load;
+                const lEl = document.getElementById('left-val');
+                lEl.innerText = lVal === 0 ? "STABLE" : (lVal > 0 ? `+ ${lVal}` : `- ${Math.abs(lVal)}`);
+                lEl.className = lVal === 0 ? "core-symbol" : (lVal > 0 ? "positive" : "negative");
+
+                // Render Right (Target)
+                const rVal = this.state.target;
+                const rEl = document.getElementById('right-val');
+                rEl.innerText = rVal > 0 ? `+ ${rVal}` : (rVal < 0 ? `- ${Math.abs(rVal)}` : "0");
+                rEl.className = rVal === 0 ? "neutral" : (rVal > 0 ? "positive" : "negative");
+
+                // Render Deck
+                const deckEl = document.getElementById('deck');
+                deckEl.innerHTML = '';
+                this.deck.forEach(card => {
+                    const btn = document.createElement('button');
+                    btn.className = `card ${card.type}`;
+                    btn.innerHTML = `
+                        <span class="card-icon">${card.type === 'matter' ? '⚛️' : '🔋'}</span>
+                        <span class="card-val">${card.val}</span>
+                    `;
+                    btn.onclick = () => this.applyCard(card);
+                    deckEl.appendChild(btn);
+                });
+            }
+        };
+
+        // Start
+        window.onload = () => Game.init();
+        window.game = Game; // Expose for HTML button
+    </script>
+</body>
+</html>
